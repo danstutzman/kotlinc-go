@@ -12,59 +12,11 @@ type ClassFile struct {
 	magic         uint32
 	minor_version uint16
 	major_version uint16
-	constant_pool []ConstantPoolEntry
+	constantPool  ConstantPool
 	access_flags  uint16
+	this_class    PoolIndex
+	super_class   PoolIndex
 }
-
-type ConstantPoolEntry interface {
-	IsConstantPoolEntry()
-	Write(out io.Writer)
-}
-
-type ConstantUtf8 struct {
-	string
-}
-
-func NewConstantUtf8(s string) ConstantUtf8 {
-	return ConstantUtf8{
-		string: s,
-	}
-}
-
-func (self ConstantUtf8) Write(out io.Writer) {
-	var type_ uint8 = CONSTANT_Utf8
-	binary.Write(out, binary.BigEndian, type_)
-
-	for _, c := range self.string {
-		if c == 0 || c > 0x7f {
-			panic(fmt.Errorf("Uh oh found bad byte %d in ConstantUtf8 %s",
-				c, self.string))
-		}
-	}
-
-	bytes := []byte(self.string)
-	var length uint16 = uint16(len(bytes))
-	binary.Write(out, binary.BigEndian, length)
-
-	out.Write(bytes)
-}
-
-func (self ConstantUtf8) IsConstantPoolEntry() {}
-
-const CONSTANT_Class = 7
-const CONSTANT_Fieldref = 9
-const CONSTANT_Methodref = 10
-const CONSTANT_InterfaceMethodref = 11
-const CONSTANT_String = 8
-const CONSTANT_Integer = 3
-const CONSTANT_Float = 4
-const CONSTANT_Long = 5
-const CONSTANT_Double = 6
-const CONSTANT_NameAndType = 12
-const CONSTANT_Utf8 = 1
-const CONSTANT_MethodHandle = 15
-const CONSTANT_MethodType = 16
-const CONSTANT_InvokeDynamic = 18
 
 const ACC_PUBLIC = 0x0001    // 	Declared public; may be accessed from outside its package.
 const ACC_PRIVATE = 0x0002   // 	Declared private; usable only within the defining class.
@@ -81,24 +33,43 @@ func (self *ClassFile) Write(out io.Writer) {
 	binary.Write(out, binary.BigEndian, self.minor_version)
 	binary.Write(out, binary.BigEndian, self.major_version)
 
-	var constant_pool_count uint16 = uint16(len(self.constant_pool))
-	binary.Write(out, binary.BigEndian, constant_pool_count)
-	for _, entry := range self.constant_pool {
-		entry.Write(out)
-	}
+	self.constantPool.Write(out)
 
 	binary.Write(out, binary.BigEndian, self.access_flags)
+	binary.Write(out, binary.BigEndian, self.this_class)
+	binary.Write(out, binary.BigEndian, self.super_class)
+
+	var numInterfaces uint16 = 0
+	binary.Write(out, binary.BigEndian, numInterfaces)
+
+	var numFields uint16 = 0
+	binary.Write(out, binary.BigEndian, numFields)
+
+	var numMethods uint16 = 0
+	binary.Write(out, binary.BigEndian, numMethods)
+
+	var numAttributes uint16 = 0
+	binary.Write(out, binary.BigEndian, numAttributes)
+
 }
 
 func main() {
+	constantPool := NewConstantPool()
+	constantPool.Add(NewConstantUtf8("System"))
+	MinimalString := constantPool.Add(NewConstantUtf8("Minimal"))
+	MinimalClass := constantPool.Add(NewConstantClass(MinimalString))
+	javaLangObjectString := constantPool.Add(NewConstantUtf8("java/lang/Object"))
+	javaLangObjectClass :=
+		constantPool.Add(NewConstantClass(javaLangObjectString))
+
 	classFile := ClassFile{
 		magic:         0xCAFEBABE,
 		minor_version: 0,
 		major_version: 52, // 1.8
-		constant_pool: []ConstantPoolEntry{
-			NewConstantUtf8("System"),
-		},
-		access_flags: ACC_PUBLIC,
+		constantPool:  constantPool,
+		access_flags:  ACC_PUBLIC,
+		this_class:    MinimalClass,
+		super_class:   javaLangObjectClass,
 	}
 
 	path := "Out.class"
