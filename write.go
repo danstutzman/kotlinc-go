@@ -16,17 +16,8 @@ type ClassFile struct {
 	access_flags  uint16
 	this_class    PoolIndex
 	super_class   PoolIndex
+	methods       []Method
 }
-
-const ACC_PUBLIC = 0x0001    // 	Declared public; may be accessed from outside its package.
-const ACC_PRIVATE = 0x0002   // 	Declared private; usable only within the defining class.
-const ACC_PROTECTED = 0x0004 // 	Declared protected; may be accessed within subclasses.
-const ACC_STATIC = 0x0008    // 	Declared static.
-const ACC_FINAL = 0x0010     // 	Declared final; never directly assigned to after object construction (JLS §17.5).
-const ACC_VOLATILE = 0x0040  // 	Declared volatile; cannot be cached.
-const ACC_TRANSIENT = 0x0080 // 	Declared transient; not written or read by a persistent object manager.
-const ACC_SYNTHETIC = 0x1000 // 	Declared synthetic; not present in the source code.
-const ACC_ENUM = 0x4000      // 	Declared as an element of an enum.
 
 func (self *ClassFile) Write(out io.Writer) {
 	binary.Write(out, binary.BigEndian, self.magic)
@@ -45,22 +36,54 @@ func (self *ClassFile) Write(out io.Writer) {
 	var numFields uint16 = 0
 	binary.Write(out, binary.BigEndian, numFields)
 
-	var numMethods uint16 = 0
+	numMethods := uint16(len(self.methods))
 	binary.Write(out, binary.BigEndian, numMethods)
+	for _, method := range self.methods {
+		method.Write(out)
+	}
 
 	var numAttributes uint16 = 0
 	binary.Write(out, binary.BigEndian, numAttributes)
-
 }
 
 func main() {
 	constantPool := NewConstantPool()
 	constantPool.Add(NewConstantUtf8("System"))
-	MinimalString := constantPool.Add(NewConstantUtf8("Minimal"))
-	MinimalClass := constantPool.Add(NewConstantClass(MinimalString))
+	MinimalGoString := constantPool.Add(NewConstantUtf8("MinimalGo"))
+	MinimalGoClass := constantPool.Add(NewConstantClass(MinimalGoString))
 	javaLangObjectString := constantPool.Add(NewConstantUtf8("java/lang/Object"))
 	javaLangObjectClass :=
 		constantPool.Add(NewConstantClass(javaLangObjectString))
+	initString := constantPool.Add(NewConstantUtf8("<init>"))
+	noArgsString := constantPool.Add(NewConstantUtf8("()V"))
+	CodeString := constantPool.Add(NewConstantUtf8("Code"))
+	//LineNumberTableString := constantPool.Add(NewConstantUtf8("LineNumberTable"))
+	//SourceFileString := constantPool.Add(NewConstantUtf8("SourceFile"))
+	//MinimalGoDotJavaString := constantPool.Add(NewConstantUtf8("Minimal.java"))
+	initNoArgsNameAndType :=
+		constantPool.Add(NewConstantNameAndType(initString, noArgsString))
+	javaLangObjectInit :=
+		constantPool.Add(NewConstantMethodRef(
+			javaLangObjectClass, initNoArgsNameAndType))
+
+	initCode := CodeAttribute{
+		attribute_name_index: CodeString,
+		max_stack:            1,
+		max_locals:           1,
+		instructionsSerialized: []byte{
+			ALOAD_0,
+			INVOKE_SPECIAL, 0, uint8(uint16(javaLangObjectInit) % 256),
+			RETURN,
+		},
+		attributes: []Attribute{},
+	}
+
+	initMethod := Method{
+		access_flags:     ACC_PUBLIC,
+		name_index:       initString,
+		descriptor_index: noArgsString,
+		attributes:       []Attribute{initCode},
+	}
 
 	classFile := ClassFile{
 		magic:         0xCAFEBABE,
@@ -68,11 +91,12 @@ func main() {
 		major_version: 52, // 1.8
 		constantPool:  constantPool,
 		access_flags:  ACC_PUBLIC,
-		this_class:    MinimalClass,
+		this_class:    MinimalGoClass,
 		super_class:   javaLangObjectClass,
+		methods:       []Method{initMethod},
 	}
 
-	path := "Out.class"
+	path := "MinimalGo.class"
 	out, err := os.Create(path)
 	if err != nil {
 		panic(err)
