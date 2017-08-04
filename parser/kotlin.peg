@@ -1,0 +1,33 @@
+{
+  package main
+
+  //fun main(args: Array<String>) {
+  //  println("Hello, world!")
+  //}
+
+  type Fun struct {
+    name string
+  }
+}
+
+Input <- Fun _ ident:Ident EOF {
+    return Fun{
+        name: ident.(string),
+    }, nil
+}
+
+Fun <- "fun" {
+    return string(c.text), nil
+}
+
+Ident <- [a-z]+ {
+    return string(c.text), nil
+}
+
+Integer <- '-'? [0-9]+ {
+    return strconv.Atoi(string(c.text))
+}
+
+_ "whitespace" <- [ \n\t\r]*
+
+EOF <- !.
