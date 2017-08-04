@@ -1,0 +1,3 @@
+#!/bin/bash -ex
+javac Hello.java
+javap -l -c -s -constants Hello.class

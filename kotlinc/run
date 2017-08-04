@@ -1,0 +1,3 @@
+#!/bin/bash -ex
+~/dev/kotlinc/bin/kotlinc hello.kt
+javap -l -c -s -constants HelloKt.class

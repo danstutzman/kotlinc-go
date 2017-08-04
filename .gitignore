@@ -1,0 +1,3 @@
+/javac/*.class
+/kotlinc/*.class
+/kotlinc/META-INF/main.kotlin_module
