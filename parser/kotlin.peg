@@ -7,25 +7,40 @@
 
   type Fun struct {
     name string
+    args []Arg
+  }
+  type Arg struct {
+    name string
+    type_ string
   }
 }
 
-Input <- Fun _ ident:Ident EOF {
-    return Fun{
-        name: ident.(string),
-    }, nil
+Input <- fun:Fun {
+  return fun, nil
 }
 
-Fun <- "fun" {
-    return string(c.text), nil
+Fun <- "fun" _ name:Ident '(' args:FunArgs ')' {
+  return Fun{
+    name: name.(string),
+    args: args.([]Arg),
+  }, nil
 }
 
-Ident <- [a-z]+ {
-    return string(c.text), nil
+FunArgs <- arg1Name:Ident _ ':' _ arg1Type:Ident {
+  return []Arg{
+    Arg{
+      name: arg1Name.(string),
+      type_: arg1Type.(string),
+    },
+  }, nil
+}
+
+Ident <- [a-zA-Z<>]+ {
+  return string(c.text), nil
 }
 
 Integer <- '-'? [0-9]+ {
-    return strconv.Atoi(string(c.text))
+  return strconv.Atoi(string(c.text))
 }
 
 _ "whitespace" <- [ \n\t\r]*
