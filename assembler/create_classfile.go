@@ -1,19 +1,19 @@
 package assembler
 
-func CreateClassFile() ClassFile {
+func CreateClassFile(className string) ClassFile {
 	constantPool := NewConstantPool()
 	constantPool.Add(NewConstantUtf8("System"))
-	MinimalGoUtf8 := constantPool.Add(NewConstantUtf8("MinimalGo"))
-	MinimalGoClass := constantPool.Add(NewConstantClass(MinimalGoUtf8))
+
+	classNameUtf8 := constantPool.Add(NewConstantUtf8(className))
+	classNameClass := constantPool.Add(NewConstantClass(classNameUtf8))
+
 	javaLangObjectUtf8 := constantPool.Add(NewConstantUtf8("java/lang/Object"))
 	javaLangObjectClass :=
 		constantPool.Add(NewConstantClass(javaLangObjectUtf8))
 	initUtf8 := constantPool.Add(NewConstantUtf8("<init>"))
 	noArgsUtf8 := constantPool.Add(NewConstantUtf8("()V"))
 	CodeUtf8 := constantPool.Add(NewConstantUtf8("Code"))
-	//LineNumberTableUtf8 := constantPool.Add(NewConstantUtf8("LineNumberTable"))
-	//SourceFileUtf8 := constantPool.Add(NewConstantUtf8("SourceFile"))
-	//MinimalGoDotJavaUtf8 := constantPool.Add(NewConstantUtf8("Minimal.java"))
+
 	initNoArgsNameAndType :=
 		constantPool.Add(NewConstantNameAndType(initUtf8, noArgsUtf8))
 	javaLangObjectInit :=
@@ -104,7 +104,7 @@ func CreateClassFile() ClassFile {
 		major_version: 52, // 1.8
 		constantPool:  constantPool,
 		access_flags:  ACC_PUBLIC,
-		this_class:    MinimalGoClass,
+		this_class:    classNameClass,
 		super_class:   javaLangObjectClass,
 		methods:       []Method{initMethod, mainMethod},
 	}

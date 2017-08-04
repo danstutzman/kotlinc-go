@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	classFile := assembler.CreateClassFile()
+	classFile := assembler.CreateClassFile("MinimalGo")
 
 	outPath := "MinimalGo.class"
 	out, err := os.Create(outPath)
