@@ -1,4 +1,4 @@
-package main
+package assembler
 
 import (
 	"encoding/binary"
@@ -46,7 +46,7 @@ func (self *ClassFile) Write(out io.Writer) {
 	binary.Write(out, binary.BigEndian, numAttributes)
 }
 
-func main() {
+func Demo(outPath string) {
 	constantPool := NewConstantPool()
 	constantPool.Add(NewConstantUtf8("System"))
 	MinimalGoUtf8 := constantPool.Add(NewConstantUtf8("MinimalGo"))
@@ -155,13 +155,12 @@ func main() {
 		methods:       []Method{initMethod, mainMethod},
 	}
 
-	path := "MinimalGo.class"
-	out, err := os.Create(path)
+	out, err := os.Create(outPath)
 	if err != nil {
 		panic(err)
 	}
 	defer out.Close()
 
 	classFile.Write(out)
-	fmt.Println(path)
+	fmt.Println(outPath)
 }

@@ -1,2 +1,5 @@
 #!/bin/bash -ex
-go run write.go constant_pool.go methods.go attributes.go
+go install .
+$GOPATH/bin/kotlinc-go MinimalGo.class
+javap -l -c -s -constants MinimalGo.class
+java MinimalGo
