@@ -1,0 +1,4 @@
+#!/bin/bash -ex
+#go get -u -v github.com/mna/pigeon
+go generate
+go test calculator_test.go calculator.peg.go
