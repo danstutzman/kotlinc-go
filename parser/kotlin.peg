@@ -1,19 +1,20 @@
 {
   package main
 
-  //fun main(args: Array<String>) {
-  //  println("Hello, world!")
-  //}
-
   type Fun struct {
     name string
     args []Arg
-    body []string
+    body []Call
   }
   type Arg struct {
     name string
     type_ string
   }
+  type Call struct {
+    name string
+    args []StringLiteral
+  }
+  type StringLiteral string
 
   func toIfaceSlice(v interface{}) []interface{} {
     if v == nil {
@@ -38,7 +39,7 @@ Fun <- "fun" _ name:Ident '(' _ funArgs:FunArgs? _ ')' _ funBody:FunBody {
   return Fun{
     name: name.(string),
     args: args,
-    body: funBody.([]string),
+    body: funBody.([]Call),
   }, nil
 }
 
@@ -61,20 +62,41 @@ FunBody <- '{' _ statements:Statements? _ '}' {
   if statements == nil {
     return []string{}, nil
   } else {
-    return statements.([]string), nil
+    return statements.([]Call), nil
   }
 }
 
 Statements <- statement:Statement _ statements:(';' _ statements:Statements)? {
-  out := []string{ statement.(string) }
+  out := []Call{ statement.(Call) }
   if statements != nil {
-    out = append(out, statements.([]interface{})[2].([]string)...)
+    out = append(out, statements.([]interface{})[2].([]Call)...)
   }
   return out, nil
 }
 
-Statement <- "println()" {
-  return "println()", nil
+Statement <- ident:Ident '(' _ callArgs:CallArgs? _ ')' {
+  if callArgs == nil {
+    return Call{
+      name: ident.(string),
+    }, nil
+  } else {
+    return Call{
+      name: ident.(string),
+      args: callArgs.([]StringLiteral),
+    }, nil
+  }
+}
+
+CallArgs <- first:CallArg _ rest:( ',' _ CallArgs )? {
+  exprs := []StringLiteral{first.(StringLiteral)}
+  if rest != nil {
+    exprs = append(exprs, rest.([]interface{})[2].([]StringLiteral)...)
+  }
+  return exprs, nil
+}
+
+CallArg <- '"' contents:[^"]* '"' {
+  return StringLiteral(c.text), nil
 }
 
 Type <- [a-zA-Z0-9<>]+ {
