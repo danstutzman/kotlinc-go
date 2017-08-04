@@ -151,6 +151,52 @@ func (self ConstantMethodRef) Write(out io.Writer) {
 func (self ConstantMethodRef) IsConstantPoolEntry() {}
 
 ///////
+type ConstantFieldRef struct {
+	classIndex       PoolIndex
+	nameAndTypeIndex PoolIndex
+}
+
+func NewConstantFieldRef(classIndex PoolIndex,
+	nameAndTypeIndex PoolIndex) ConstantFieldRef {
+
+	return ConstantFieldRef{
+		classIndex:       classIndex,
+		nameAndTypeIndex: nameAndTypeIndex,
+	}
+}
+
+func (self ConstantFieldRef) Write(out io.Writer) {
+	var type_ uint8 = CONSTANT_Fieldref
+	binary.Write(out, binary.BigEndian, type_)
+
+	binary.Write(out, binary.BigEndian, self.classIndex)
+	binary.Write(out, binary.BigEndian, self.nameAndTypeIndex)
+}
+
+func (self ConstantFieldRef) IsConstantPoolEntry() {}
+
+//////
+type ConstantString struct {
+	stringIndex PoolIndex
+}
+
+func NewConstantString(stringIndex PoolIndex) ConstantString {
+
+	return ConstantString{
+		stringIndex: stringIndex,
+	}
+}
+
+func (self ConstantString) Write(out io.Writer) {
+	var type_ uint8 = CONSTANT_String
+	binary.Write(out, binary.BigEndian, type_)
+
+	binary.Write(out, binary.BigEndian, self.stringIndex)
+}
+
+func (self ConstantString) IsConstantPoolEntry() {}
+
+///////
 
 const CONSTANT_Class = 7
 const CONSTANT_Fieldref = 9
