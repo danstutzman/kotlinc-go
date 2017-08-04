@@ -8,6 +8,7 @@
   type Fun struct {
     name string
     args []Arg
+    body []string
   }
   type Arg struct {
     name string
@@ -26,7 +27,7 @@ Input <- fun:Fun {
   return fun, nil
 }
 
-Fun <- "fun" _ name:Ident '(' _ funArgs:FunArgs? _ ')' {
+Fun <- "fun" _ name:Ident '(' _ funArgs:FunArgs? _ ')' _ funBody:FunBody {
   var args []Arg
   if funArgs == nil {
     args = []Arg{}
@@ -37,6 +38,7 @@ Fun <- "fun" _ name:Ident '(' _ funArgs:FunArgs? _ ')' {
   return Fun{
     name: name.(string),
     args: args,
+    body: funBody.([]string),
   }, nil
 }
 
@@ -53,6 +55,26 @@ FunArg <- name:Ident _ ':' _ type_:Type {
     name: name.(string),
     type_: type_.(string),
   }, nil
+}
+
+FunBody <- '{' _ statements:Statements? _ '}' {
+  if statements == nil {
+    return []string{}, nil
+  } else {
+    return statements.([]string), nil
+  }
+}
+
+Statements <- statement:Statement _ statements:(';' _ statements:Statements)? {
+  out := []string{ statement.(string) }
+  if statements != nil {
+    out = append(out, statements.([]interface{})[2].([]string)...)
+  }
+  return out, nil
+}
+
+Statement <- "println()" {
+  return "println()", nil
 }
 
 Type <- [a-zA-Z0-9<>]+ {
