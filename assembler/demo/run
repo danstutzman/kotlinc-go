@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
 cd ../..
-go install .
-$GOPATH/bin/kotlinc-go MinimalGo.class
+go install ./assembler/demo
+$GOPATH/bin/demo MinimalGo.class
 javap -l -c -s -constants MinimalGo.class
 java MinimalGo
