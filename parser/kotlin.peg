@@ -13,29 +13,53 @@
     name string
     type_ string
   }
+
+  func toIfaceSlice(v interface{}) []interface{} {
+    if v == nil {
+        return nil
+    }
+    return v.([]interface{})
+  }
 }
 
 Input <- fun:Fun {
   return fun, nil
 }
 
-Fun <- "fun" _ name:Ident '(' args:FunArgs ')' {
+Fun <- "fun" _ name:Ident '(' _ funArgs:FunArgs? _ ')' {
+  var args []Arg
+  if funArgs == nil {
+    args = []Arg{}
+  } else {
+    args = funArgs.([]Arg)
+  }
+
   return Fun{
     name: name.(string),
-    args: args.([]Arg),
+    args: args,
   }, nil
 }
 
-FunArgs <- arg1Name:Ident _ ':' _ arg1Type:Ident {
-  return []Arg{
-    Arg{
-      name: arg1Name.(string),
-      type_: arg1Type.(string),
-    },
+FunArgs <- first:FunArg _ rest:( ',' _ FunArgs )? {
+  args := []Arg{first.(Arg)}
+  if rest != nil {
+    args = append(args, rest.([]interface{})[2].([]Arg)...)
+  }
+  return args, nil
+}
+
+FunArg <- name:Ident _ ':' _ type_:Type {
+  return Arg{
+    name: name.(string),
+    type_: type_.(string),
   }, nil
 }
 
-Ident <- [a-zA-Z<>]+ {
+Type <- [a-zA-Z0-9<>]+ {
+  return string(c.text), nil
+}
+
+Ident <- [a-zA-Z0-9]+ {
   return string(c.text), nil
 }
 
