@@ -1,6 +1,6 @@
 package assembler
 
-func CreateClassFile(className string) ClassFile {
+func CreateClassFile(className string, stringsToPrint []string) ClassFile {
 	constantPool := NewConstantPool()
 	constantPool.Add(NewConstantUtf8("System"))
 
@@ -30,10 +30,14 @@ func CreateClassFile(className string) ClassFile {
 	javaLangSystemOutFieldRef := constantPool.Add(NewConstantFieldRef(
 		javaLangSystemClass, outReturnsPrintStreamNameAndType,
 	))
-	helloUtf8 := constantPool.Add(NewConstantUtf8("hello"))
-	helloString := constantPool.Add(NewConstantString(helloUtf8))
-	stringArgNoReturnUtf8 :=
-		constantPool.Add(NewConstantUtf8("(Ljava/lang/String;)V"))
+
+	var stringStringIndexes = []PoolIndex{}
+	for _, stringToPrint := range stringsToPrint {
+		stringUtf8 := constantPool.Add(NewConstantUtf8(stringToPrint))
+		stringString := constantPool.Add(NewConstantString(stringUtf8))
+		stringStringIndexes = append(stringStringIndexes, stringString)
+	}
+
 	stringArrayArgNoReturnUtf8 :=
 		constantPool.Add(NewConstantUtf8("([Ljava/lang/String;)V"))
 
@@ -42,6 +46,8 @@ func CreateClassFile(className string) ClassFile {
 	javaIoPrintStreamClass :=
 		constantPool.Add(NewConstantClass(javaIoPrintStreamUtf8))
 	printlnUtf8 := constantPool.Add(NewConstantUtf8("println"))
+	stringArgNoReturnUtf8 :=
+		constantPool.Add(NewConstantUtf8("(Ljava/lang/String;)V"))
 	printlnTakesStringArg := constantPool.Add(
 		NewConstantNameAndType(printlnUtf8, stringArgNoReturnUtf8),
 	)
@@ -69,17 +75,22 @@ func CreateClassFile(className string) ClassFile {
 		attributes:       []Attribute{initCode},
 	}
 
-	mainCode := CodeAttribute{
-		attribute_name_index: CodeUtf8,
-		max_stack:            2, // TODO
-		max_locals:           1, // TODO
-		instructionsSerialized: []byte{
+	bytes := []byte{}
+	for i := range stringsToPrint {
+		bytes = append(bytes, []byte{
 			GETSTATIC, 0, uint8(uint16(javaLangSystemOutFieldRef) % 256),
-			LDC, uint8(uint16(helloString) % 256),
+			LDC, uint8(uint16(stringStringIndexes[i]) % 256),
 			INVOKEVIRTUAL, 0, uint8(uint16(javaIoPrintStreamPrintlnMethodRef) % 256),
-			RETURN,
-		},
-		attributes: []Attribute{},
+		}...)
+	}
+	bytes = append(bytes, RETURN)
+
+	mainCode := CodeAttribute{
+		attribute_name_index:   CodeUtf8,
+		max_stack:              2, // TODO
+		max_locals:             1, // TODO
+		instructionsSerialized: bytes,
+		attributes:             []Attribute{},
 	}
 	/*
 	   public static void main();
