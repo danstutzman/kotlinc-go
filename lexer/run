@@ -1,2 +1,0 @@
-#!/bin/bash -ex
-go run lexer_demo.go lexer.go token.go

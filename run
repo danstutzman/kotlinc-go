@@ -1,5 +1,4 @@
 #!/bin/bash -ex
+go generate
 go install .
-$GOPATH/bin/kotlinc-go MinimalGo.class
-javap -l -c -s -constants MinimalGo.class
-java MinimalGo
+$GOPATH/bin/kotlinc-go
