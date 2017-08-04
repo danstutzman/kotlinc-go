@@ -2,6 +2,6 @@
 
 cd ../..
 go install ./assembler/demo
-$GOPATH/bin/demo MinimalGo.class
+$GOPATH/bin/demo
 javap -l -c -s -constants MinimalGo.class
 java MinimalGo

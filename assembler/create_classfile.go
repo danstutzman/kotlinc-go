@@ -1,11 +1,6 @@
 package assembler
 
-import (
-	"fmt"
-	"os"
-)
-
-func Demo(outPath string) {
+func CreateClassFile() ClassFile {
 	constantPool := NewConstantPool()
 	constantPool.Add(NewConstantUtf8("System"))
 	MinimalGoUtf8 := constantPool.Add(NewConstantUtf8("MinimalGo"))
@@ -113,13 +108,5 @@ func Demo(outPath string) {
 		super_class:   javaLangObjectClass,
 		methods:       []Method{initMethod, mainMethod},
 	}
-
-	out, err := os.Create(outPath)
-	if err != nil {
-		panic(err)
-	}
-	defer out.Close()
-
-	classFile.Write(out)
-	fmt.Println(outPath)
+	return classFile
 }
